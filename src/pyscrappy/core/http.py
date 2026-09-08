@@ -525,10 +525,9 @@ class HttpClient:
         return self._client
 
     def _pick_ua(self) -> str:
-        # A configured single user_agent overrides rotation.
-        if self.config.user_agent:
-            return self.config.user_agent
-        return random.choice(self.config.user_agents)
+        # A configured single user_agent overrides rotation (shared with the
+        # browser backend via ScraperConfig.pick_user_agent).
+        return self.config.pick_user_agent() or random.choice(self.config.user_agents)
 
     def _merge_headers(
         self, extra: dict[str, str], user_agent: str | None = None

@@ -53,6 +53,17 @@ class TestCrypto:
         # the markets URL should carry the resolved id
         assert "ids=ethereum" in s._http.get_html.call_args[0][0]
 
+    def test_unresolvable_query_errors_not_falls_back_to_top_market(self):
+        # A specific query that resolves to nothing (typo / unknown coin) must
+        # error, not silently return the unfiltered top-market list.
+        search = json.dumps({"coins": []})  # /search finds nothing
+        s = _mock(CryptoScraper(), search)
+        r = s.scrape(query="bitcon")  # typo
+        assert r.data == []
+        assert r.errors and "No coins matched" in r.errors[0].message
+        # It must NOT have fetched the markets endpoint after the empty search.
+        assert s._http.get_html.call_count == 1
+
 
 class TestCurrency:
     def test_rates_and_conversion(self):

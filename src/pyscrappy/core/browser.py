@@ -82,7 +82,9 @@ class BrowserManager:
             self._start()
 
         timeout_ms = int((wait_timeout or self.config.timeout) * 1000)
-        ua = self.config.user_agents[0] if self.config.user_agents else None
+        # Honor the same UA contract as the HTTP backend: a configured
+        # user_agent overrides, otherwise rotate through user_agents.
+        ua = self.config.pick_user_agent()
 
         context = self._browser.new_context(user_agent=ua)
         page = context.new_page()
@@ -103,7 +105,7 @@ class BrowserManager:
         if not self._browser:
             self._start()
 
-        context = self._browser.new_context()
+        context = self._browser.new_context(user_agent=self.config.pick_user_agent())
         page = context.new_page()
         try:
             page.goto(url, wait_until="networkidle", timeout=int(self.config.timeout * 1000))

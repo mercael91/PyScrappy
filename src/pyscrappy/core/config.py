@@ -135,3 +135,14 @@ class ScraperConfig:
         if not choices:
             return random.choice(self.proxy) if self.proxy else None
         return random.choice(choices)
+
+    def pick_user_agent(self) -> str | None:
+        """Return the User-Agent to send: a configured single ``user_agent``
+        overrides ``user_agents`` rotation, otherwise one is chosen at random from
+        ``user_agents`` (or None if that list is empty). Shared by the HTTP and
+        browser backends so both honor the same contract."""
+        import random
+
+        if self.user_agent:
+            return self.user_agent
+        return random.choice(self.user_agents) if self.user_agents else None

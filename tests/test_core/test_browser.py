@@ -109,6 +109,22 @@ class TestBrowserManagerGetHtml:
         assert mock_page.evaluate.call_count == 3
         assert mock_page.wait_for_timeout.call_count == 3
 
+    def test_get_html_honors_configured_user_agent(self):
+        # A configured single user_agent must be passed to the browser context,
+        # not silently ignored in favor of user_agents[0].
+        bm = BrowserManager(ScraperConfig(user_agent="MyBot/1.0"))
+        mock_page = MagicMock()
+        mock_page.content.return_value = "<html></html>"
+        mock_context = MagicMock()
+        mock_context.new_page.return_value = mock_page
+        mock_browser = MagicMock()
+        mock_browser.new_context.return_value = mock_context
+        bm._browser = mock_browser
+
+        bm.get_html("https://example.com")
+
+        mock_browser.new_context.assert_called_once_with(user_agent="MyBot/1.0")
+
     def test_get_html_cleans_up_on_error(self):
         bm = BrowserManager()
         mock_page = MagicMock()
@@ -142,6 +158,21 @@ class TestBrowserManagerScreenshot:
         mock_page.screenshot.assert_called_once_with(path="/tmp/test.png", full_page=True)
         mock_page.close.assert_called_once()
         mock_context.close.assert_called_once()
+
+    def test_screenshot_honors_configured_user_agent(self):
+        # screenshot() previously created a context with no UA (headless default);
+        # it must now pass the configured user_agent like get_html.
+        bm = BrowserManager(ScraperConfig(user_agent="MyBot/1.0"))
+        mock_page = MagicMock()
+        mock_context = MagicMock()
+        mock_context.new_page.return_value = mock_page
+        mock_browser = MagicMock()
+        mock_browser.new_context.return_value = mock_context
+        bm._browser = mock_browser
+
+        bm.screenshot("https://example.com", "/tmp/test.png")
+
+        mock_browser.new_context.assert_called_once_with(user_agent="MyBot/1.0")
 
     def test_screenshot_partial_page(self):
         bm = BrowserManager()

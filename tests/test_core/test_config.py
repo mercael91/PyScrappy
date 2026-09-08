@@ -54,6 +54,19 @@ class TestScraperConfig:
         config = ScraperConfig(user_agents=agents)
         assert config.user_agents == agents
 
+    def test_pick_user_agent_override_wins(self):
+        # A single configured user_agent overrides the rotation list.
+        config = ScraperConfig(user_agent="MyBot/1.0", user_agents=["A/1", "B/2"])
+        assert config.pick_user_agent() == "MyBot/1.0"
+
+    def test_pick_user_agent_rotates_when_no_override(self):
+        config = ScraperConfig(user_agents=["A/1", "B/2"])
+        assert config.pick_user_agent() in {"A/1", "B/2"}
+
+    def test_pick_user_agent_none_when_no_agents(self):
+        config = ScraperConfig(user_agent=None, user_agents=[])
+        assert config.pick_user_agent() is None
+
     def test_render_js_auto(self):
         config = ScraperConfig(render_js="auto")
         assert config.render_js == "auto"

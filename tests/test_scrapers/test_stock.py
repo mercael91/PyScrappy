@@ -115,6 +115,14 @@ class TestStockScraperQuote:
         assert "AAPL" in call_url
         scraper.close()
 
+    def test_unknown_mode_errors_instead_of_silently_quoting(self):
+        # A typo'd mode previously fell through to a quote; it must now error.
+        scraper = StockScraper()
+        result = scraper.scrape(symbol="AAPL", mode="quotes")  # typo
+        assert result.data == []
+        assert result.errors and "Unknown mode" in result.errors[0].message
+        scraper.close()
+
 
 class TestStockScraperHistory:
     def test_scrape_history(self):
