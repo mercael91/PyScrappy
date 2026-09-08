@@ -524,11 +524,11 @@ class HttpClient:
             self._client = self._build_client()
         return self._client
 
-    def _pick_ua(self) -> str:
-        # A configured single user_agent overrides rotation.
-        if self.config.user_agent:
-            return self.config.user_agent
-        return random.choice(self.config.user_agents)
+    def _pick_ua(self) -> str | None:
+        # A configured single user_agent overrides rotation (shared with the
+        # browser backend via ScraperConfig.pick_user_agent). Returns None only
+        # if both user_agent and user_agents are empty.
+        return self.config.pick_user_agent()
 
     def _merge_headers(
         self, extra: dict[str, str], user_agent: str | None = None
@@ -536,7 +536,10 @@ class HttpClient:
         """Build the request headers: config.headers (lowest priority), then the
         chosen User-Agent, then per-call headers (highest priority)."""
         ua = user_agent or self._pick_ua()
-        return {**self.config.headers, "User-Agent": ua, **extra}
+        headers = {**self.config.headers}
+        if ua:  # omit the header entirely if no UA is configured (user_agents=[])
+            headers["User-Agent"] = ua
+        return {**headers, **extra}
 
     def _backoff_delay(self, attempt: int) -> float:
         """Retry delay for this client's config (see module-level backoff_delay)."""

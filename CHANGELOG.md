@@ -6,6 +6,15 @@ All notable changes to PyScrappy are documented here. The format is based on
 
 ## [Unreleased]
 
+## [1.6.3] - 2026-09-01
+
+### Fixed
+- **The browser backend now honors `config.user_agent`.** With `render_js=True`, a configured single `user_agent` was silently ignored (the browser always sent `user_agents[0]`), and `screenshot()` sent no User-Agent at all (Playwright's headless-Chrome default). Both now use the same UA contract as the HTTP backend via `ScraperConfig.pick_user_agent()` — a configured `user_agent` overrides, otherwise the `user_agents` list is rotated.
+- **Crypto: a specific-coin query that resolves to nothing now errors instead of returning the top market.** `get_crypto(query=...)` where none of the terms resolved to a CoinGecko id (a typo, an unknown coin, or a failing search) silently dropped the `ids` filter and returned the unfiltered top coins by market cap. It now returns an empty `ScrapeResult` with a "No coins matched query" error, so a caller can tell the lookup failed.
+
+### Added
+- **Stock: unknown `mode` values are rejected.** `scrape_stock(mode=...)` with an unrecognized mode (e.g. a `"quotes"` typo) previously fell through to a quote silently; it now returns a `ScrapeError` naming the allowed modes (`quote`, `history`, `profile`).
+
 ## [1.6.2] - 2026-09-01
 
 ### Fixed

@@ -56,6 +56,10 @@ class CryptoScraper(BaseScraper):
             ScrapeResult with coin data (name, symbol, price, market cap, …).
         """
         ids = self._resolve_ids(query) if query else None
+        if query and not ids:
+            # A specific-coin query that resolved to nothing must not silently fall
+            # through to the unfiltered top-market list — report it instead.
+            return self._err(_MARKETS, f"No coins matched query {query!r}.")
         url = self._build_markets_url(vs_currency, max_results, ids)
 
         try:
@@ -73,6 +77,9 @@ class CryptoScraper(BaseScraper):
     ) -> ScrapeResult:
         """Async counterpart to :meth:`scrape` (same args/returns)."""
         ids = await self._resolve_ids_async(query) if query else None
+        if query and not ids:
+            # See scrape(): don't fall through to the unfiltered top-market list.
+            return self._err(_MARKETS, f"No coins matched query {query!r}.")
         url = self._build_markets_url(vs_currency, max_results, ids)
 
         try:

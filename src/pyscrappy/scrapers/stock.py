@@ -8,7 +8,23 @@ from typing import Any
 from pyscrappy.core.base import BaseScraper
 from pyscrappy.core.config import ScraperConfig
 from pyscrappy.core.exceptions import NetworkError
-from pyscrappy.core.models import ScrapeMetadata, ScrapeResult
+from pyscrappy.core.models import ScrapeError, ScrapeMetadata, ScrapeResult
+
+_MODES = ("quote", "history", "profile")
+
+
+def _invalid_mode_result(mode: str, scraper_name: str) -> ScrapeResult:
+    return ScrapeResult(
+        data=[],
+        metadata=ScrapeMetadata(scraper=scraper_name),
+        errors=[
+            ScrapeError(
+                url=_YF_BASE,
+                message=f"Unknown mode {mode!r}. Use one of: {', '.join(_MODES)}.",
+            )
+        ],
+    )
+
 
 _YF_BASE = "https://query1.finance.yahoo.com"
 
@@ -61,6 +77,8 @@ class StockScraper(BaseScraper):
             ScrapeResult with stock data.
         """
         symbol = symbol.upper().strip()
+        if mode not in _MODES:
+            return _invalid_mode_result(mode, self.name)
 
         if mode == "history":
             return self._scrape_history(symbol, period, interval)
@@ -78,6 +96,8 @@ class StockScraper(BaseScraper):
     ) -> ScrapeResult:
         """Async counterpart to :meth:`scrape` (same args/returns)."""
         symbol = symbol.upper().strip()
+        if mode not in _MODES:
+            return _invalid_mode_result(mode, self.name)
 
         if mode == "history":
             url = f"{_YF_BASE}/v8/finance/chart/{symbol}?range={period}&interval={interval}"
