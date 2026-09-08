@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import random
 import time
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urlencode, urlparse
@@ -244,16 +243,19 @@ class AsyncHttpClient:
             self._client = self._build_client()
         return self._client
 
-    def _pick_ua(self) -> str:
-        if self.config.user_agent:
-            return self.config.user_agent
-        return random.choice(self.config.user_agents)
+    def _pick_ua(self) -> str | None:
+        # Shared contract with the sync client and browser backend via
+        # ScraperConfig.pick_user_agent(); None only if no UA is configured at all.
+        return self.config.pick_user_agent()
 
     def _merge_headers(
         self, extra: dict[str, str], user_agent: str | None = None
     ) -> dict[str, str]:
         ua = user_agent or self._pick_ua()
-        return {**self.config.headers, "User-Agent": ua, **extra}
+        headers = {**self.config.headers}
+        if ua:  # omit the header entirely if no UA is configured (user_agents=[])
+            headers["User-Agent"] = ua
+        return {**headers, **extra}
 
     # Cache is shared with the sync client (same module-level store + lock).
 

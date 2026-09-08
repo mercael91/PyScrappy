@@ -430,6 +430,14 @@ class TestHttpClientUserAgentRotation:
         client = HttpClient(config)
         assert {client._pick_ua() for _ in range(20)} == {"Custom/9.9"}
 
+    def test_no_user_agents_does_not_crash_and_omits_header(self):
+        # user_agents=[] with no override must not raise (previously IndexError via
+        # random.choice([])); _merge_headers then omits the User-Agent entirely.
+        config = ScraperConfig(user_agent=None, user_agents=[])
+        client = HttpClient(config)
+        assert client._pick_ua() is None
+        assert "User-Agent" not in client._merge_headers({})
+
 
 class TestHttpClientCustomHeaders:
     def test_config_headers_are_sent(self):
